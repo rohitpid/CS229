@@ -1,15 +1,24 @@
-%% 
-clc; clear;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% LayeredNetwork: This function simulates a layered Neural network.
+% Arguments in order
+% 1) data
+% 2) target: this is the target value that the NN tries to predict.
+% 3) units: A vector whose length specifies the number of leayers. The 
+%    numbers in each element represent the number of units in that layer.
+%    e.g. [1 5 1] in Layer 1 the input, there is 1 unit. Layer 2 has 5
+%    units and layer 3 has 1 output unit.
+% 4) learningRate: this is the learning rate.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [output] = LayeredNetwork(data,target,units,learningRate)
 
-
-%% initialize the network
-units = [1 5 1];           % units in each layer (includes input/output)
+% initialize the network
+%units = [1 5 1];           % units in each layer (includes input/output)
 nlayers = length(units);    % number of layers
-t = 0:1000;                % "time" index
-input = t/10;              % input
+t = 1:size(data,1);         % "time" index
+%input = t/10;              % input
 % input = cos(t/50);
-target = cos(t/50);% target output
-alpha = .05;                 % learning rate
+%target = cos(t/50);% target output
+alpha = learningRate;                 % learning rate
 
 Weights = cell(nlayers-1, 1);
 for i = 1 : nlayers-1
@@ -22,13 +31,14 @@ state_derivative = cell(nlayers, 1);
 error = cell(nlayers, 1);
 output = zeros(size(target));
 output_prev = zeros(size(target));
-%% Train network
+
+% Train network
 while(true)    
     for i = 1 : length(t)
         % Forward Propagation
-        state{1} = input(i);            % first layer is just the input
+        state{1} = data(i,:)';            % first layer is just the input
         for layer = 2 : nlayers         % forward propagate through network
-            layer_input = Weights{layer - 1} * [state{layer - 1} ; 1];
+            layer_input = Weights{layer - 1} * ([state{layer - 1} ; 1]);
             if layer < nlayers
                 state{layer} = sigmoid(layer_input);
                 state_derivative{layer} = sigmoid(layer_input) .* (1 - sigmoid(layer_input));
@@ -65,10 +75,5 @@ while(true)
 
     oldWeights = Weights; 
 end
-    
 
-%% plot state
-figure(1); clf;
-subplot(212); plot(t, input, 'linewidth', 2); hold on;
-subplot(211); plot(t, target, 'r:', 'linewidth', 2); hold on; 
-plot(t, output, 'g', 'linewidth', 1); 
+end

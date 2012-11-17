@@ -35,3 +35,10 @@ target = adjClosePrice(1:651);
 % price 4 days ago, price 5 days ago, 5 day MA, 10 day MA, 20 day MA
 
 %%% call functions for LayeredNetwork and echo state network
+%t = (1:1000)';
+%data = t/10;
+%target = cos(t/50);
+units = [9 5 1];
+learningRate = 0.05;
+output = LayeredNetwork(data,target,units,learningRate);
+plotResults(data,output,target);

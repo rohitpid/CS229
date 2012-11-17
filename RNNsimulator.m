@@ -2,31 +2,35 @@
 clc; clear;
 
 %% initialize simulation
-t = 0:25;  % time
-sp  = .05;  % sparsity
-a = .8;   % amount by which to scale max singular value by
+t = 0:20;   % time
+sp = .05;   % sparsity
+a = .8;     % amount by which to scale max singular value by
 
 % dimensions
-K = 5;       % input feature size
-N = 30;     % number of units
-L = 1;       % dimension of output
+K = 5;      % input feature size
+N = 10;     % number of units
+L = 1;      % dimension of output
 
-% initialize state, inputs, training example outputs
-X = zeros(N, length(t))';        % state
-U = zeros(K, length(t))';        % input
-Ytrain = zeros(L, length(t))';   % desired output
-Y = zeros(L, length(t))';        % actual output
-Z = [X U];                       % extended state
+% allocate memory
+X = zeros(length(t), N);        % state
+U = zeros(length(t), K);        % input
+Ytrain = zeros(length(t), L);   % desired output
+Y = zeros(length(t), L);        % actual output
+Z = zeros(length(t), N + K);    % extended state
+Win = zeros(N, K);              % input weights
+W = zeros(N, N);                % recurrent weights
+% Wout = zeros(L, N + K);          % output weights
+Wout = zeros(L, N);          % output weights
 
-X(1,:) = rand(1, N);
-% U(5, :) = ones(K, 1)'; % let's give an impulse to the system
-U = rand(K, length(t))';
-Ytrain = 2 * rand(L, length(t))' - 1; 
+% Initialize states and set inputs
+X(1,:) = 2*rand(1, N) - 1;
+% U(5, :) = ones(K, 1)'; % impulse input to the system
+U = rand(length(t), K); % random network
+Ytrain = 2 * rand(length(t), L) - 1; 
 
 Win = 2*rand(N, K) - 1;     % scale between -1 and 1 -- is this necessary?
 W = 2*rand(N) - 1;          % recurrent connection weights
 Wfb = randn(N, L);          % weights connecting output to units
-Wout = zeros(L, N + K);     % weights translating states to output
 
 % sparsify and condition recurrent connections
 idx = rand(N);
@@ -36,19 +40,20 @@ W = a/(norm(W)) * W;        % rescale max singular value
 %% run simulation
 
 % training - teacher forcing
-for i = 2 : length(t) - 1;
+for i = 1 : length(t) - 1;
     X(i + 1, :) = sigmoid(Win * U(i, :)' + W * X(i, :)' + Wfb * Ytrain(i, :)')' - .5;
-    Z(i, :) = [X(i, :), U(i, :)];
 end
+Z = [X, U];         % extended state matrix
+Wout = Z\Ytrain;    % solve for Wout
 
-% solve for Wout
-Wout = Z\Ytrain;
+% Can the network produce the training data?
 
-% testing
-for i = 2 : length(t) - 1;
+for i = 1 : length(t);
     Z(i, :) = [X(i, :), U(i, :)];
     Y(i, :) = Wout' * Z(i, :)' ;
-    X(i+1, :) = sigmoid(Win * U(i, :)' + W * X(i, :)' + Wfb * Y(i, :)) - .5;
+    if i < length(t)
+        X(i+1, :) = sigmoid(Win * U(i, :)' + W * X(i, :)' + Wfb * Y(i, :)) - .5;
+    end
 end
 
 
